@@ -1,0 +1,108 @@
+<section class="p-6">
+  <div class="bg-white rounded-2xl border shadow-sm">
+    <!-- Header -->
+    <div class="px-6 py-5 flex items-start justify-between gap-4">
+      <div>
+        <h2 class="text-lg font-semibold text-gray-900">Users</h2>
+        <p class="mt-1 text-sm text-gray-500">
+          A list of all the users in your account including their name, email, role and status.
+        </p>
+      </div>
+      <!-- usuarios.component.html -->
+        <button
+        class="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+        (click)="onAddUser()">
+        Add user
+        </button>
+
+    </div>
+
+    <!-- Loader / Error -->
+    <div class="px-6" *ngIf="loading || error">
+      <div *ngIf="loading" class="py-6 text-sm text-gray-600">Cargando usuarios…</div>
+      <div *ngIf="error" class="py-6 text-sm text-red-600">{{ error }}</div>
+    </div>
+
+    <!-- Table -->
+    <div class="overflow-x-auto">
+      <table class="min-w-full table-fixed border-t">
+        <thead>
+          <tr class="text-left text-sm text-gray-600">
+            <th class="px-6 py-3 w-[28%] font-medium">Name</th>
+            <th class="px-6 py-3 w-[30%] font-medium">Email</th>
+            <th class="px-6 py-3 w-[16%] font-medium">Role</th>
+            <th class="px-6 py-3 w-[14%] font-medium">Status</th>
+            <th class="px-6 py-3 w-[12%]"></th>
+          </tr>
+        </thead>
+
+        <tbody class="divide-y">
+          <!-- Empty -->
+          <tr *ngIf="!loading && !error && usuarios.length === 0">
+            <td colspan="5" class="px-6 py-12 text-center">
+              <div class="text-sm text-gray-500">No hay usuarios registrados.</div>
+            </td>
+          </tr>
+
+          <!-- Rows -->
+          <tr *ngFor="let u of usuarios; trackBy: trackById" class="text-sm">
+            <td class="px-6 py-4">
+              <div class="flex items-center gap-3">
+                <img
+                  class="h-9 w-9 rounded-full object-cover"
+                  [src]="'https://i.pravatar.cc/80?u=' + u.email"
+                  alt="avatar" />
+                <div class="min-w-0">
+                  <div class="font-medium text-gray-900 truncate">{{ u.nombre }}</div>
+                  <div class="text-gray-500 truncate">{{ u.email.split('@')[1] || '—' }}</div>
+                </div>
+              </div>
+            </td>
+
+            <td class="px-6 py-4">
+              <a class="text-indigo-600 hover:underline break-all" [href]="'mailto:' + u.email">
+                {{ u.email }}
+              </a>
+            </td>
+
+            <td class="px-6 py-4">
+              <span
+                class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium"
+                [ngClass]="{
+                  'bg-indigo-50 text-indigo-700 ring-1 ring-indigo-600/20': u.rol === 'ADMIN',
+                  'bg-amber-50 text-amber-700 ring-1 ring-amber-600/20': u.rol === 'VENDEDOR',
+                  'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-600/20': u.rol === 'PROPIETARIO' || u.rol === 'CLIENTE',
+                  'bg-slate-100 text-slate-700 ring-1 ring-slate-400/30': true
+                }">
+                {{ u.rol }}
+              </span>
+            </td>
+
+            <td class="px-6 py-4">
+              <span
+                class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium"
+                [ngClass]="u.activo
+                  ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-600/20'
+                  : 'bg-rose-50 text-rose-700 ring-1 ring-rose-600/20'">
+                {{ u.activo ? 'Activo' : 'Inactivo' }}
+              </span>
+            </td>
+
+            <td class="px-6 py-4 text-right">
+              <div class="inline-flex items-center gap-4">
+                <button class="text-indigo-600 hover:text-indigo-800 font-medium" (click)="onVer(u)">
+                  Ver
+                </button>
+                <button
+                  class="text-gray-600 hover:text-gray-900"
+                  (click)="onToggleEstado(u)">
+                  {{ u.activo ? 'Desactivar' : 'Activar' }}
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>

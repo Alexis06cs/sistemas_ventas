@@ -1,0 +1,43 @@
+<aside class="h-screen bg-white shadow-md flex flex-col p-4">
+  <div class="mb-6">
+    <img src="assets/sistema_venta.png" alt="Logo" class="h-14 mx-auto">
+  </div>
+
+  <nav class="flex-1">
+    <ul class="space-y-2 text-sm font-medium text-gray-700">
+      <li>
+        <a routerLink="/"
+           [routerLinkActive]="'text-indigo-600'"
+           [routerLinkActiveOptions]="{ exact: true }"
+           class="flex items-center space-x-2 hover:text-indigo-600">
+          <span>🏠</span><span>Dashboard</span>
+        </a>
+      </li>
+      <li>
+        <a routerLink="/clientes"
+           routerLinkActive="text-indigo-600"
+           class="flex items-center space-x-2 hover:text-indigo-600">
+          <span>👥</span><span>Clientes</span>
+        </a>
+      </li>
+      <li>
+        <a routerLink="/usuarios"
+           routerLinkActive="text-indigo-600"
+           class="flex items-center space-x-2 hover:text-indigo-600">
+            <span>🧑‍💼</span><span>Usuarios</span>
+        </a>
+      </li>
+
+      <!-- agrega más items: equipos, ventas, etc. -->
+    </ul>
+  </nav>
+
+  <div class="mt-6 border-t pt-4 text-sm">
+    <div class="text-gray-500 uppercase mb-2">Tu organización</div>
+    <ul class="space-y-1">
+      <li class="text-gray-600">Tailwind Labs</li>
+      <li class="text-gray-600">Workcation</li>
+    </ul>
+    <a class="mt-4 text-indigo-600 hover:underline cursor-pointer block">⚙️ Configuración</a>
+  </div>
+</aside>
