@@ -1,63 +1,84 @@
-import { Component } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit } from '@angular/core';
+import { CommonModule, NgClass } from '@angular/common';
 
-interface Cliente {
-  id: number;
-  nombre: string;
-  cargo: string;
-  email: string;
-  rol: 'ADMIN' | 'VENDEDOR' | 'CLIENTE' | string;
-  empresa?: string;
-  avatarUrl?: string;
-}
+// ⛳ Usa el path de tu servicio real.
+// Si tu archivo se llama usuario-api.service.ts, cambia el import.
+import { UsuarioApiService, Usuario } from '../../../services/usuario.service';
 
 @Component({
   selector: 'app-clientes',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, NgClass],
   templateUrl: './clientes.component.html',
-  styleUrls: ['./clientes.component.css'] // corregido: styleUrls (array)
+  styleUrls: ['./clientes.component.css']
 })
-export class ClientesComponent {
-  clientes: Cliente[] = [
-    {
-      id: 1,
-      nombre: 'Lindsay Walton',
-      cargo: 'Front-end Developer',
-      email: 'lindsay.walton@example.com',
-      rol: 'CLIENTE',
-      empresa: 'Tech Solutions',
-      avatarUrl: 'https://i.pravatar.cc/80?u=lindsay.walton@example.com'
-    },
-    {
-      id: 2,
-      nombre: 'Courtney Henry',
-      cargo: 'Designer',
-      email: 'courtney.henry@example.com',
-      rol: 'ADMIN',
-      empresa: 'Creative Studio',
-      avatarUrl: 'https://i.pravatar.cc/80?u=courtney.henry@example.com'
-    },
-    {
-      id: 3,
-      nombre: 'Tom Cook',
-      cargo: 'Director of Product',
-      email: 'tom.cook@example.com',
-      rol: 'CLIENTE',
-      empresa: 'Global Corp',
-      avatarUrl: 'https://i.pravatar.cc/80?u=tom.cook@example.com'
-    }
-  ];
+export class ClientesComponent implements OnInit {
+  loading = false;
+  clientes: Usuario[] = [];
 
-  trackByClienteId = (_: number, cliente: Cliente) => cliente.id;
+  // Paginación
+  page = 1;
+  readonly pageSize = 10;
 
-  onAddCliente(): void {
-    console.log('Agregar cliente');
-    // Aquí abrir modal/formulario para añadir cliente
+  constructor(private usuarioApi: UsuarioApiService) {}
+
+  ngOnInit(): void {
+    this.cargarUsuarios();
   }
 
-  onEditCliente(cliente: Cliente): void {
-    console.log('Editar cliente:', cliente);
-    // Aquí abrir modal/formulario para editar cliente
+  trackByClienteId = (_: number, u: Usuario) => u.id;
+
+  cargarUsuarios(): void {
+    this.loading = true;
+    this.usuarioApi.listarUsuarios().subscribe({
+      next: (rows: any) => {
+        // Soporta respuesta como Page de Spring o array plano
+        if (rows && Array.isArray(rows.content)) {
+          this.clientes = rows.content;
+        } else if (Array.isArray(rows)) {
+          this.clientes = rows;
+        } else {
+          this.clientes = [];
+          console.warn('Respuesta inesperada para usuarios:', rows);
+        }
+        this.page = 1; // reset al cambiar la data
+        this.loading = false;
+      },
+      error: (err) => {
+        console.error('Error cargando usuarios:', err);
+        this.loading = false;
+        this.clientes = [];
+      },
+    });
+  }
+
+  // Total de páginas para mostrar en el footer
+  get totalPages(): number {
+    return Math.max(1, Math.ceil(this.clientes.length / this.pageSize));
+  }
+
+  cambiarPagina(destino: number): void {
+    const next = Math.min(Math.max(1, destino), this.totalPages);
+    this.page = next;
+  }
+
+  onToggleEstado(u: Usuario): void {
+    this.usuarioApi.cambiarEstado(u.id).subscribe({
+      next: (actualizado) => {
+        const idx = this.clientes.findIndex(x => x.id === actualizado.id);
+        if (idx >= 0) this.clientes[idx].activo = actualizado.activo;
+      },
+      error: (err) => console.error('Error cambiando estado:', err),
+    });
+  }
+
+  onEditCliente(u: Usuario): void {
+    console.log('Editar usuario:', u);
+    // abrir modal / navegar a edición
+  }
+
+  onAddUsuario(): void {
+    console.log('Agregar usuario');
+    // abrir modal / navegar a creación
   }
 }

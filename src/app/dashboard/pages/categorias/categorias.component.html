@@ -1,0 +1,104 @@
+<section class="p-6">
+  <!-- Header -->
+  <div class="flex items-center justify-between mb-4">
+    <div>
+      <h2 class="text-lg font-semibold">Categorías</h2>
+      <p class="text-sm text-gray-500">Gestiona las categorías de equipos.</p>
+    </div>
+
+    <div class="flex gap-2">
+      <input
+        type="text"
+        [(ngModel)]="search"
+        placeholder="Buscar por nombre o descripción…"
+        class="w-72 max-w-full border rounded-lg px-3 py-2"
+      />
+      <button class="px-3 py-2 rounded border hover:bg-gray-50" (click)="cargar()" [disabled]="loading">
+        {{ loading ? 'Cargando…' : 'Refrescar' }}
+      </button>
+      <button
+        class="px-4 py-2 rounded bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50"
+        (click)="abrirCrear()"
+        [disabled]="!canCreate">
+        Nueva categoría
+      </button>
+    </div>
+  </div>
+
+  <!-- Tabla -->
+  <div class="overflow-x-auto bg-white rounded-2xl border">
+    <table class="min-w-full table-fixed">
+      <thead>
+        <tr class="text-left text-sm text-gray-600">
+          <th class="px-6 py-3 font-medium w-[30%]">Nombre</th>
+          <th class="px-6 py-3 font-medium">Descripción</th>
+          <th class="px-6 py-3 font-medium w-[160px] text-right">Acciones</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y">
+        <tr *ngIf="!filtradas.length">
+          <td colspan="3" class="px-6 py-10 text-center text-sm text-gray-500">Sin registros</td>
+        </tr>
+
+        <tr *ngFor="let c of filtradas | slice:(page-1)*pageSize : (page-1)*pageSize + pageSize; trackBy: trackById"
+            class="text-sm">
+          <td class="px-6 py-3 font-medium text-gray-900">{{ c.nombre }}</td>
+          <td class="px-6 py-3 text-gray-700">{{ c.descripcion || '—' }}</td>
+          <td class="px-6 py-3 text-right space-x-3">
+            <button class="text-indigo-600 hover:text-indigo-800 font-medium"
+                    (click)="abrirEditar(c)" [disabled]="!canEdit">Editar</button>
+            <button class="text-red-600 hover:text-red-800 font-medium"
+                    (click)="eliminar(c)" [disabled]="!canDelete">Eliminar</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Paginación -->
+  <div class="flex justify-center items-center gap-2 mt-4" *ngIf="filtradas.length">
+    <button class="px-3 py-1 rounded bg-gray-200"
+            [disabled]="page===1" (click)="cambiarPagina(page-1)">Anterior</button>
+    <span>Página {{ page }} de {{ totalPages }}</span>
+    <button class="px-3 py-1 rounded bg-gray-200"
+            [disabled]="page>=totalPages" (click)="cambiarPagina(page+1)">Siguiente</button>
+  </div>
+</section>
+
+<!-- MODAL Crear/Editar -->
+<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
+     *ngIf="modalOpen">
+  <div class="bg-white rounded-2xl shadow-2xl w-[95vw] max-w-lg overflow-hidden">
+    <!-- Header -->
+    <div class="px-6 py-4 border-b flex items-center justify-between">
+      <h3 class="text-lg font-semibold">
+        {{ isEdit ? 'Editar categoría' : 'Nueva categoría' }}
+      </h3>
+      <button class="text-gray-500 hover:text-gray-700" (click)="cerrarModal()" aria-label="Cerrar">✕</button>
+    </div>
+
+    <!-- Body -->
+    <form [formGroup]="form" (ngSubmit)="onSubmit()" class="p-6 space-y-4">
+      <div>
+        <label class="block text-sm font-medium">Nombre</label>
+        <input type="text" formControlName="nombre" class="mt-1 w-full border rounded px-3 py-2"/>
+        <p class="text-xs text-red-600 mt-1" *ngIf="f('nombre')?.touched && f('nombre')?.invalid">
+          El nombre es requerido (máx. 120).
+        </p>
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium">Descripción</label>
+        <textarea rows="3" formControlName="descripcion" class="mt-1 w-full border rounded px-3 py-2"></textarea>
+      </div>
+
+      <div class="flex justify-end gap-2 pt-2">
+        <button type="button" class="px-3 py-2 rounded border" (click)="cerrarModal()">Cancelar</button>
+        <button type="submit" class="px-4 py-2 rounded bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50"
+                [disabled]="form.invalid || loading">
+          {{ loading ? 'Guardando…' : (isEdit ? 'Guardar cambios' : 'Crear') }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

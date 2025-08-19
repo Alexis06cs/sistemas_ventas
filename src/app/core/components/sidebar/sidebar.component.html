@@ -4,7 +4,7 @@
   </div>
 
   <nav class="flex-1">
-    <ul class="space-y-2 text-sm font-medium text-gray-700">
+    <ul class="space-y-2 text-sm font-medium text-gray-1200">
       <li>
         <a routerLink="/"
            [routerLinkActive]="'text-indigo-600'"
@@ -20,6 +20,36 @@
           <span>👥</span><span>Clientes</span>
         </a>
       </li>
+       <li>
+        <a routerLink="/categorias"
+           routerLinkActive="text-indigo-600"
+           class="flex items-center space-x-2 hover:text-indigo-600">
+            <span>🧑‍💼</span><span>Categorías</span>
+        </a>
+      </li>
+      
+      <li>
+        <a routerLink="/equipos"
+           routerLinkActive="text-indigo-600"
+           class="flex items-center space-x-2 hover:text-indigo-600">
+            <span>📦</span><span>Equipos</span>
+        </a>
+      <li>
+        <a routerLink="/detalles"
+           routerLinkActive="text-indigo-600"
+           class="flex items-center space-x-2 hover:text-indigo-600">
+            <span>📋</span><span>Detalles Alquiler</span>
+        </a>
+      </li>
+
+      <li>
+        <a routerLink="/devoluciones"
+            routerLinkActive="text-indigo-600"
+            class="flex items-center space-x-2 hover:text-indigo-600">
+              <span>↩️</span><span>Devoluciones</span>
+         </a>
+      </li>
+
       <li>
         <a routerLink="/usuarios"
            routerLinkActive="text-indigo-600"

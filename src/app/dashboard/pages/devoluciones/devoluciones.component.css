@@ -1,0 +1,3 @@
+:host { display: block; }
+table { border-collapse: collapse; }
+tbody tr:hover { background: #fafafa; }

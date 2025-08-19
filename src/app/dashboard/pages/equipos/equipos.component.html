@@ -1,0 +1,128 @@
+<section class="p-6">
+  <!-- Header -->
+  <div class="flex items-center justify-between mb-4">
+    <div>
+      <h2 class="text-lg font-semibold">Equipos</h2>
+      <p class="text-sm text-gray-500">Gestión de equipos (lista + modal crear/editar).</p>
+    </div>
+
+    <div class="flex gap-2">
+      <input
+        type="text"
+        [(ngModel)]="search"
+        placeholder="Buscar por nombre/categoría/ID…"
+        class="w-72 max-w-full border rounded-lg px-3 py-2"
+      />
+      <button class="px-3 py-2 rounded border hover:bg-gray-50" (click)="cargar()" [disabled]="loading">
+        {{ loading ? 'Cargando…' : 'Refrescar' }}
+      </button>
+      <button
+        class="px-4 py-2 rounded bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50"
+        (click)="abrirCrear()"
+        [disabled]="!canCreate">
+        Nuevo equipo
+      </button>
+    </div>
+  </div>
+
+  <!-- Tabla -->
+  <div class="overflow-x-auto bg-white rounded-2xl border">
+    <table class="min-w-full table-fixed">
+      <thead>
+        <tr class="text-left text-sm text-gray-600">
+          <th class="px-6 py-3 font-medium w-[28%]">Nombre</th>
+          <th class="px-6 py-3 font-medium">Categoría</th>
+          <th class="px-6 py-3 font-medium">Precio</th>
+          <th class="px-6 py-3 font-medium">Stock</th>
+          <th class="px-6 py-3 font-medium">Propietario</th>
+          <th class="px-6 py-3 font-medium w-[160px] text-right">Acciones</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y">
+        <tr *ngIf="!filtrados.length">
+          <td colspan="6" class="px-6 py-10 text-center text-sm text-gray-500">Sin registros</td>
+        </tr>
+
+        <tr *ngFor="let e of filtrados | slice:(page-1)*pageSize : (page-1)*pageSize + pageSize; trackBy: trackById" class="text-sm">
+          <td class="px-6 py-3 font-medium text-gray-900">{{ e.nombre }}</td>
+          <td class="px-6 py-3">{{ categoriaLabel(e) }}</td>
+          <td class="px-6 py-3">S/ {{ e.precio | number:'1.2-2' }}</td>
+          <td class="px-6 py-3">{{ e.stock }}</td>
+          <td class="px-6 py-3">{{ e.propietario?.nombre || '—' }}</td>
+
+          <td class="px-6 py-3 text-right space-x-3">
+            <button class="text-indigo-600 hover:text-indigo-800 font-medium"
+                    (click)="abrirEditar(e)" [disabled]="!canEdit">Editar</button>
+            <button class="text-red-600 hover:text-red-800 font-medium"
+                    (click)="eliminar(e)" [disabled]="!canDelete">Eliminar</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Paginación -->
+  <div class="flex justify-center items-center gap-2 mt-4" *ngIf="filtrados.length">
+    <button class="px-3 py-1 rounded bg-gray-200" [disabled]="page===1" (click)="cambiarPagina(page-1)">Anterior</button>
+    <span>Página {{ page }} de {{ totalPages }}</span>
+    <button class="px-3 py-1 rounded bg-gray-200" [disabled]="page>=totalPages" (click)="cambiarPagina(page+1)">Siguiente</button>
+  </div>
+</section>
+
+<!-- MODAL Crear/Editar -->
+<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40" *ngIf="modalOpen">
+  <div class="bg-white rounded-2xl shadow-2xl w-[95vw] max-w-lg overflow-hidden">
+    <div class="px-6 py-4 border-b flex items-center justify-between">
+      <h3 class="text-lg font-semibold">{{ isEdit ? 'Editar equipo' : 'Nuevo equipo' }}</h3>
+      <button class="text-gray-500 hover:text-gray-700" (click)="cerrarModal()" aria-label="Cerrar">✕</button>
+    </div>
+
+    <form [formGroup]="form" (ngSubmit)="onSubmit()" class="p-6 space-y-4">
+      <div>
+        <label class="block text-sm font-medium">Nombre</label>
+        <input type="text" formControlName="nombre" class="mt-1 w-full border rounded px-3 py-2">
+      </div>
+      <div>
+        <label class="block text-sm font-medium">Descripción</label>
+        <textarea rows="3" formControlName="descripcion" class="mt-1 w-full border rounded px-3 py-2"></textarea>
+      </div>
+
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-medium">Precio (S/)</label>
+          <input type="number" min="0" step="0.01" formControlName="precio" class="mt-1 w-full border rounded px-3 py-2">
+        </div>
+        <div>
+          <label class="block text-sm font-medium">Stock</label>
+          <input type="number" min="0" formControlName="stock" class="mt-1 w-full border rounded px-3 py-2">
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-4">
+        <!-- ⬇️ Select de categorías por ID -->
+        <div>
+          <label class="block text-sm font-medium">Categoría</label>
+          <select formControlName="categoriaId" class="mt-1 w-full border rounded px-3 py-2">
+            <option [ngValue]="null" disabled>Seleccione…</option>
+            <option *ngFor="let c of categorias" [ngValue]="c.id">{{ c.nombre }}</option>
+          </select>
+          <small class="text-gray-500" *ngIf="!categorias.length">Cargando categorías…</small>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium">Imagen URL</label>
+          <input type="text" formControlName="imagenUrl" class="mt-1 w-full border rounded px-3 py-2">
+        </div>
+      </div>
+
+      <div class="flex justify-end gap-2 pt-2">
+        <button type="button" class="px-3 py-2 rounded border" (click)="cerrarModal()">Cancelar</button>
+        <button type="submit"
+                class="px-4 py-2 rounded bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50"
+                [disabled]="form.invalid || loading || (isEdit ? !canEdit : !canCreate)">
+          {{ loading ? 'Guardando…' : (isEdit ? 'Guardar cambios' : 'Crear') }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

@@ -1,19 +1,27 @@
-<!-- clientes.component.html -->
 <section class="p-6">
   <div class="bg-white rounded-2xl border shadow-sm">
     <!-- Header -->
     <div class="px-6 py-5 flex items-start justify-between gap-4">
       <div>
-        <h2 class="text-lg font-semibold text-gray-900">Clientes</h2>
+        <h2 class="text-lg font-semibold text-gray-900">Usuarios</h2>
         <p class="mt-1 text-sm text-gray-500">
-          Lista de clientes con su nombre, cargo, email y rol.
+          Lista de usuarios registrados en el sistema.
         </p>
       </div>
-      <button
-        class="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-        (click)="onAddCliente()">
-        Add client
-      </button>
+
+      <div class="flex items-center gap-2">
+        <button
+          class="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          (click)="onAddUsuario()">
+          Add user
+        </button>
+        <button
+          class="rounded-lg px-3 py-2 text-sm font-medium border hover:bg-gray-50"
+          (click)="cargarUsuarios()"
+          [disabled]="loading">
+          {{ loading ? 'Cargando...' : 'Refrescar' }}
+        </button>
+      </div>
     </div>
 
     <!-- Table -->
@@ -21,50 +29,35 @@
       <table class="min-w-full table-fixed border-t">
         <thead>
           <tr class="text-left text-sm text-gray-600">
-            <th class="px-6 py-3 w-[34%] font-medium">Name</th>
-            <th class="px-6 py-3 w-[22%] font-medium">Title</th>
-            <th class="px-6 py-3 w-[26%] font-medium">Email</th>
-            <th class="px-6 py-3 w-[12%] font-medium">Role</th>
-            <th class="px-6 py-3 w-[6%]"></th>
+            <th class="px-6 py-3 font-medium">Nombre</th>
+            <th class="px-6 py-3 font-medium">Email</th>
+            <th class="px-6 py-3 font-medium">Rol</th>
+            <th class="px-6 py-3 font-medium">Estado</th>
+            <th class="px-6 py-3"></th>
           </tr>
         </thead>
+
         <tbody class="divide-y">
           <!-- Empty state -->
           <tr *ngIf="!clientes || clientes.length === 0">
             <td colspan="5" class="px-6 py-12 text-center">
-              <div class="text-sm text-gray-500">No hay clientes registrados.</div>
+              <div class="text-sm text-gray-500">No hay usuarios registrados.</div>
             </td>
           </tr>
 
-          <!-- Rows -->
-          <tr *ngFor="let c of clientes; trackBy: trackByClienteId" class="text-sm">
-            <!-- Name -->
-            <td class="px-6 py-4">
-              <div class="flex items-center gap-3">
-                <img
-                  class="h-9 w-9 rounded-full object-cover"
-                  [src]="c.avatarUrl || 'https://i.pravatar.cc/80?u=' + c.email"
-                  alt="avatar" />
-                <div class="min-w-0">
-                  <div class="font-medium text-gray-900 truncate">{{ c.nombre }}</div>
-                  <div class="text-gray-500 truncate">{{ c.empresa || '—' }}</div>
-                </div>
-              </div>
-            </td>
+          <!-- Rows (paginado con slice pipe: 10 por página) -->
+          <tr
+            *ngFor="let c of clientes | slice:(page-1)*pageSize : (page-1)*pageSize + pageSize; trackBy: trackByClienteId"
+            class="text-sm"
+          >
+            <td class="px-6 py-4 font-medium text-gray-900">{{ c.nombre }}</td>
 
-            <!-- Title -->
-            <td class="px-6 py-4">
-              <span class="text-gray-700">{{ c.cargo || '—' }}</span>
-            </td>
-
-            <!-- Email -->
             <td class="px-6 py-4">
               <a class="text-indigo-600 hover:underline break-all" [href]="'mailto:' + c.email">
                 {{ c.email }}
               </a>
             </td>
 
-            <!-- Role -->
             <td class="px-6 py-4">
               <span
                 class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium"
@@ -78,17 +71,47 @@
               </span>
             </td>
 
-            <!-- Actions -->
-            <td class="px-6 py-4 text-right">
+            <td class="px-6 py-4">
               <button
-                class="text-indigo-600 hover:text-indigo-800 font-medium"
-                (click)="onEditCliente(c)">
+                (click)="onToggleEstado(c)"
+                class="px-2 py-1 rounded text-xs font-medium"
+                [ngClass]="{
+                  'bg-green-100 text-green-700': c.activo,
+                  'bg-red-100 text-red-700': !c.activo
+                }">
+                {{ c.activo ? 'Activo' : 'Inactivo' }}
+              </button>
+            </td>
+
+            <td class="px-6 py-4 text-right">
+              <button class="text-indigo-600 hover:text-indigo-800 font-medium" (click)="onEditCliente(c)">
                 Edit
               </button>
             </td>
           </tr>
         </tbody>
       </table>
+    </div>
+
+    <!-- Paginación -->
+    <div class="flex justify-center items-center gap-2 px-6 py-4 border-t" *ngIf="clientes.length > 0">
+      <button
+        class="px-3 py-1 rounded bg-gray-200 hover:bg-gray-300 text-sm disabled:opacity-50"
+        [disabled]="page === 1"
+        (click)="cambiarPagina(page - 1)">
+        Anterior
+      </button>
+
+      <span class="text-sm">
+        Página {{ page }} de {{ totalPages }}
+      </span>
+
+      <button
+        class="px-3 py-1 rounded bg-gray-200 hover:bg-gray-300 text-sm disabled:opacity-50"
+        [disabled]="page >= totalPages"
+        (click)="cambiarPagina(page + 1)">
+        Siguiente
+      </button>
     </div>
   </div>
 </section>

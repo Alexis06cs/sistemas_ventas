@@ -3,24 +3,27 @@
     <!-- Header -->
     <div class="px-6 py-5 flex items-start justify-between gap-4">
       <div>
-        <h2 class="text-lg font-semibold text-gray-900">Users</h2>
+        <h2 class="text-lg font-semibold text-gray-900">Usuarios</h2>
         <p class="mt-1 text-sm text-gray-500">
-          A list of all the users in your account including their name, email, role and status.
+          Lista de usuarios registrados en el sistema.
         </p>
       </div>
-      <!-- usuarios.component.html -->
+
+      <div class="flex items-center gap-2">
         <button
-        class="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-        (click)="onAddUser()">
-        Add user
+          class="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          (click)="onAddUsuario()"
+        >
+          Add user
         </button>
-
-    </div>
-
-    <!-- Loader / Error -->
-    <div class="px-6" *ngIf="loading || error">
-      <div *ngIf="loading" class="py-6 text-sm text-gray-600">Cargando usuarios…</div>
-      <div *ngIf="error" class="py-6 text-sm text-red-600">{{ error }}</div>
+        <button
+          class="rounded-lg px-3 py-2 text-sm font-medium border hover:bg-gray-50"
+          (click)="cargarUsuarios()"
+          [disabled]="loading"
+        >
+          {{ loading ? 'Cargando...' : 'Refrescar' }}
+        </button>
+      </div>
     </div>
 
     <!-- Table -->
@@ -28,40 +31,32 @@
       <table class="min-w-full table-fixed border-t">
         <thead>
           <tr class="text-left text-sm text-gray-600">
-            <th class="px-6 py-3 w-[28%] font-medium">Name</th>
-            <th class="px-6 py-3 w-[30%] font-medium">Email</th>
-            <th class="px-6 py-3 w-[16%] font-medium">Role</th>
-            <th class="px-6 py-3 w-[14%] font-medium">Status</th>
-            <th class="px-6 py-3 w-[12%]"></th>
+            <th class="px-6 py-3 font-medium">Nombre</th>
+            <th class="px-6 py-3 font-medium">Email</th>
+            <th class="px-6 py-3 font-medium">Rol</th>
+            <th class="px-6 py-3 font-medium">Estado</th>
+            <th class="px-6 py-3 w-[160px] text-right">Acciones</th>
           </tr>
         </thead>
 
         <tbody class="divide-y">
-          <!-- Empty -->
-          <tr *ngIf="!loading && !error && usuarios.length === 0">
+          <!-- Empty state -->
+          <tr *ngIf="!clientes || clientes.length === 0">
             <td colspan="5" class="px-6 py-12 text-center">
               <div class="text-sm text-gray-500">No hay usuarios registrados.</div>
             </td>
           </tr>
 
-          <!-- Rows -->
-          <tr *ngFor="let u of usuarios; trackBy: trackById" class="text-sm">
-            <td class="px-6 py-4">
-              <div class="flex items-center gap-3">
-                <img
-                  class="h-9 w-9 rounded-full object-cover"
-                  [src]="'https://i.pravatar.cc/80?u=' + u.email"
-                  alt="avatar" />
-                <div class="min-w-0">
-                  <div class="font-medium text-gray-900 truncate">{{ u.nombre }}</div>
-                  <div class="text-gray-500 truncate">{{ u.email.split('@')[1] || '—' }}</div>
-                </div>
-              </div>
-            </td>
+          <!-- Rows (paginado con slice pipe: 6 por página) -->
+          <tr
+            *ngFor="let c of clientes | slice:(page-1)*pageSize : (page-1)*pageSize + pageSize; trackBy: trackByClienteId"
+            class="text-sm"
+          >
+            <td class="px-6 py-4 font-medium text-gray-900">{{ c.nombre }}</td>
 
             <td class="px-6 py-4">
-              <a class="text-indigo-600 hover:underline break-all" [href]="'mailto:' + u.email">
-                {{ u.email }}
+              <a class="text-indigo-600 hover:underline break-all" [href]="'mailto:' + c.email">
+                {{ c.email }}
               </a>
             </td>
 
@@ -69,40 +64,124 @@
               <span
                 class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium"
                 [ngClass]="{
-                  'bg-indigo-50 text-indigo-700 ring-1 ring-indigo-600/20': u.rol === 'ADMIN',
-                  'bg-amber-50 text-amber-700 ring-1 ring-amber-600/20': u.rol === 'VENDEDOR',
-                  'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-600/20': u.rol === 'PROPIETARIO' || u.rol === 'CLIENTE',
-                  'bg-slate-100 text-slate-700 ring-1 ring-slate-400/30': true
-                }">
-                {{ u.rol }}
+                  'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-600/20': c.rol === 'CLIENTE',
+                  'bg-indigo-50 text-indigo-700 ring-1 ring-indigo-600/20': c.rol === 'ADMIN',
+                  'bg-amber-50 text-amber-700 ring-1 ring-amber-600/20': c.rol === 'VENDEDOR',
+                  'bg-slate-100 text-slate-700 ring-1 ring-slate-400/30': c.rol !== 'CLIENTE' && c.rol !== 'ADMIN' && c.rol !== 'VENDEDOR'
+                }"
+              >
+                {{ c.rol }}
               </span>
             </td>
 
             <td class="px-6 py-4">
-              <span
-                class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium"
-                [ngClass]="u.activo
-                  ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-600/20'
-                  : 'bg-rose-50 text-rose-700 ring-1 ring-rose-600/20'">
-                {{ u.activo ? 'Activo' : 'Inactivo' }}
-              </span>
+              <button
+                (click)="onToggleEstado(c)"
+                class="px-2 py-1 rounded text-xs font-medium"
+                [ngClass]="{
+                  'bg-green-100 text-green-700': c.activo,
+                  'bg-red-100 text-red-700': !c.activo
+                }"
+              >
+                {{ c.activo ? 'Activo' : 'Inactivo' }}
+              </button>
             </td>
 
-            <td class="px-6 py-4 text-right">
-              <div class="inline-flex items-center gap-4">
-                <button class="text-indigo-600 hover:text-indigo-800 font-medium" (click)="onVer(u)">
-                  Ver
-                </button>
-                <button
-                  class="text-gray-600 hover:text-gray-900"
-                  (click)="onToggleEstado(u)">
-                  {{ u.activo ? 'Desactivar' : 'Activar' }}
-                </button>
-              </div>
+            <td class="px-6 py-4 text-right space-x-3">
+              <button class="text-indigo-600 hover:text-indigo-800 font-medium" (click)="onEditCliente(c)">
+                Edit
+              </button>
+              <button class="text-red-600 hover:text-red-800 font-medium" (click)="onDeleteCliente(c)">
+                Delete
+              </button>
             </td>
           </tr>
         </tbody>
       </table>
     </div>
+
+    <!-- Paginación -->
+    <div class="flex justify-center items-center gap-2 px-6 py-4 border-t" *ngIf="clientes.length > 0">
+      <button
+        class="px-3 py-1 rounded bg-gray-200 hover:bg-gray-300 text-sm disabled:opacity-50"
+        [disabled]="page === 1"
+        (click)="cambiarPagina(page - 1)"
+      >
+        Anterior
+      </button>
+
+      <span class="text-sm">Página {{ page }} de {{ totalPages }}</span>
+
+      <button
+        class="px-3 py-1 rounded bg-gray-200 hover:bg-gray-300 text-sm disabled:opacity-50"
+        [disabled]="page >= totalPages"
+        (click)="cambiarPagina(page + 1)"
+      >
+        Siguiente
+      </button>
+    </div>
   </div>
 </section>
+
+<!-- Modal Crear/Editar -->
+<div
+  class="fixed inset-0 z-40 flex items-center justify-center bg-black/40"
+  *ngIf="showForm"
+>
+  <div class="bg-white rounded-xl w-full max-w-lg p-6 shadow-xl">
+    <h3 class="text-lg font-semibold text-gray-900 mb-4">
+      {{ isEdit ? 'Editar usuario' : 'Crear usuario' }}
+    </h3>
+
+    <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-4">
+      <div>
+        <label class="block text-sm font-medium text-gray-700">Nombre</label>
+        <input
+          formControlName="nombre"
+          type="text"
+          class="mt-1 w-full rounded-lg border px-3 py-2"
+          placeholder="Nombre completo"
+        />
+        <p class="text-xs text-red-600 mt-1" *ngIf="f('nombre')?.touched && f('nombre')?.invalid">
+          Nombre es requerido.
+        </p>
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium text-gray-700">Email</label>
+        <input
+          formControlName="email"
+          type="email"
+          class="mt-1 w-full rounded-lg border px-3 py-2"
+          placeholder="correo@ejemplo.com"
+        />
+        <p class="text-xs text-red-600 mt-1" *ngIf="f('email')?.touched && f('email')?.invalid">
+          Email válido es requerido.
+        </p>
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium text-gray-700">Rol</label>
+        <select formControlName="rol" class="mt-1 w-full rounded-lg border px-3 py-2">
+          <option *ngFor="let r of roles" [value]="r">{{ r }}</option>
+        </select>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <input id="activo" type="checkbox" formControlName="activo" class="rounded border" />
+        <label for="activo" class="text-sm text-gray-700">Activo</label>
+      </div>
+
+      <div class="flex justify-end gap-2 pt-2">
+        <button type="button" class="px-3 py-2 rounded border" (click)="cerrarForm()">Cancelar</button>
+        <button
+          type="submit"
+          class="px-4 py-2 rounded bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50"
+          [disabled]="form.invalid"
+        >
+          {{ isEdit ? 'Guardar cambios' : 'Crear' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
